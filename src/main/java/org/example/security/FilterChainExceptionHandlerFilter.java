@@ -5,29 +5,40 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
+import org.example.exception.SampleException;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 @Slf4j
-@Component
-public class FilterChainExceptionHandlerFilter  extends OncePerRequestFilter {
+public class FilterChainExceptionHandlerFilter extends OncePerRequestFilter {
 
-  @Autowired
-  @Qualifier("handlerExceptionResolver")
-  private HandlerExceptionResolver resolver;
+  private final SpringTemplateEngine templateEngine;
+
+  public FilterChainExceptionHandlerFilter( SpringTemplateEngine templateEngine ) {
+    this.templateEngine = templateEngine;
+  }
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
     try {
       filterChain.doFilter(request, response);
     } catch (Exception e) {
-      log.error("Spring Security Filter Chain Exception:", e);
-      resolver.resolveException(request, response, null, e);
+      log.error("caught exception ", e);
+
+      if ( e instanceof SampleException ) {
+        Context context = new Context();
+        context.setVariable("statusCode", "123");
+        context.setVariable("message", e.getLocalizedMessage() );
+        String htmlTemplate = this.templateEngine.process("error", context);
+        PrintWriter printWriter = response.getWriter();
+        printWriter.println( htmlTemplate );
+        printWriter.close();
+      }
+
     }
   }
 }

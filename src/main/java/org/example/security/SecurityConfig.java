@@ -9,14 +9,14 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.session.DisableEncodeUrlFilter;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 @Configuration
 @EnableWebSecurity(debug = true)
 public class SecurityConfig {
 
   @Autowired
-  private FilterChainExceptionHandlerFilter filterChainExceptionHandlerFilter;
-
+  private SpringTemplateEngine templateEngine;
 
   @Bean
   SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -26,7 +26,7 @@ public class SecurityConfig {
             .httpBasic(AbstractHttpConfigurer::disable)
             .anonymous(AbstractHttpConfigurer::disable)
             .logout(AbstractHttpConfigurer::disable)
-            .addFilterBefore( filterChainExceptionHandlerFilter, DisableEncodeUrlFilter.class )
+            .addFilterBefore( new FilterChainExceptionHandlerFilter( templateEngine ), DisableEncodeUrlFilter.class )
             .addFilterBefore( new SampleFilter(), SecurityContextHolderFilter.class )
             .build();
   }
